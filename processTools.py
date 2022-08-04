@@ -2,6 +2,7 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtCore import QObject
 from PyQt6.QtGui import QImage
 import cv2
+import math
 from pathlib import Path
 import win32com.client
 sh = win32com.client.gencache.EnsureDispatch('Shell.Application', 0)
@@ -14,6 +15,7 @@ sh = win32com.client.gencache.EnsureDispatch('Shell.Application', 0)
 class ExtractImages(QObject):
     reelImage = pyqtSignal(QImage)
     fPath = None
+    finished = pyqtSignal()
 
     def run(self):
         """
@@ -29,7 +31,7 @@ class ExtractImages(QObject):
         fW = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         fH = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
         r = fW / fH
-        frameInterval = int(frameCount / 100)
+        frameInterval = math.ceil(frameCount / 100)
         success, image = capture.read()
         count = 0
 
@@ -39,9 +41,10 @@ class ExtractImages(QObject):
                 bytesPerLine = 3 * width
                 qImg = QImage(image.data, width, height,
                               bytesPerLine, QImage.Format.Format_BGR888)
-                self.reelImage.emit(qImg.scaled(r * 100, 100))
+                self.reelImage.emit(qImg.scaled(r * 80, 80))
             success, image = capture.read()
             count += 1
+        self.finished.emit()
 
 
 def checkDuration(filePath):

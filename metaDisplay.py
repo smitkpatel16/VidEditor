@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import wave
 from PyQt6.QtWidgets import QGraphicsView
 from PyQt6.QtWidgets import QGraphicsScene
 from PyQt6.QtGui import QPixmap
@@ -22,6 +25,7 @@ class MetaDisplay(QGraphicsView):
         self.__brush = QBrush(QColor(127, 127, 255, 127))
         self.__r = None
         self.__iw = 0
+        self.__totalW = 0
 
     # add image to the scene
     def addImage(self, qImg):
@@ -34,7 +38,12 @@ class MetaDisplay(QGraphicsView):
             self.__r.setZValue(10000)
             self.__iw = pm.width()
         self.__count += 1
+        self.__totalW += pm.width()
+
+    def setDuration(self, duration):
+        self.__duration = duration
 
     def setActive(self, c):
-        print("setActive", c)
-        self.__r.setPos(c * self.__iw, 0)
+        p = c/self.__duration
+        p = p*self.__totalW
+        self.__r.setPos(p, 0)

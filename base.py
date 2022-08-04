@@ -1,8 +1,9 @@
 from mediaControl import MediaControls
 from metaDisplay import MetaDisplay
-from videoPlayer import VidPlayer
+from mediaPlayer import MediaPlayer
 from processTools import ExtractImages
 from processTools import checkDuration
+from audioDisplay import AudioGraph
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QUrl
 from PyQt6.QtCore import QThread
@@ -46,67 +47,93 @@ class VideoEditorMainWindow(QMainWindow):
         super(VideoEditorMainWindow, self).__init__(parent)
         self.setWindowTitle("Video Editor")
         self.__mediaControls = MediaControls()
-        self.__vidPlayer = VidPlayer()
+        self.__avPlayer = MediaPlayer()
         self.setGeometry(300, 300, 800, 600)
         # Add a menu bar
         self.__menuBar = self.menuBar()
         self.__fileMenu = self.__menuBar.addMenu("File")
         self.__reelDisplay = MetaDisplay()
-        open = QAction("Open", self)
-        self.__fileMenu.addAction(open)
-        open.triggered.connect(self.__openFile)
+        openVideo = QAction("Open Video", self)
+        self.__fileMenu.addAction(openVideo)
+        openVideo.triggered.connect(self.__openVideoFile)
+
+        openAudio = QAction("Open Audio", self)
+        self.__fileMenu.addAction(openAudio)
+        openAudio.triggered.connect(self.__openAudioFile)
 
         self.setCentralWidget(CentralWidget())
-        self.centralWidget().addWidget(self.__vidPlayer)
+        self.centralWidget().addWidget(self.__avPlayer)
         policy = QSizePolicy(QSizePolicy.Policy.Expanding,
                              QSizePolicy.Policy.Expanding)
-        self.__vidPlayer.setSizePolicy(policy)
+        self.__avPlayer.setSizePolicy(policy)
         self.__reelDisplay.setMaximumHeight(100)
         self.centralWidget().addWidget(self.__reelDisplay)
         self.centralWidget().addWidget(self.__mediaControls)
 
+        self.__threads = []
+        self.__imageExtract = ExtractImages()
+        self.__showAudio = AudioGraph()
+        self.centralWidget().addWidget(self.__showAudio)
         self.__connectSignals()
-        self.__w = None
-        self.__t = None
         self.show()
     # close the video player thread if active
 
     def closeEvent(self, event):
-        self.__vidPlayer.stop()
+        # self.__avPlayer.stop()
         event.accept()
 
-    def __openFile(self):
-        file_name = QFileDialog.getOpenFileName(
-            self, "Open File", "", "Video Files (*.mp4 *.avi *.mov *.mkv)")
-        self.__vidPlayer.videoPlayer.setSource(
-            QUrl.fromLocalFile(file_name[0]))
-        duration = checkDuration(file_name[0])
-        s = int(duration.split(':')[0])*3600 + \
-            int(duration.split(':')[1])*60 + \
-            int(duration.split(':')[2])
-        self.__mediaControls.setDuration(s*1000)
-        self.__w = ExtractImages()
-        self.__w.fPath = file_name[0]
-        self.__t = QThread()
-        self.__w.moveToThread(self.__t)
-        self.__t.started.connect(self.__w.run)
-        self.__w.reelImage.connect(self.__reelDisplay.addImage)
-        self.__t.start()
+    def __openVideoFile(self):
+        fileName = QFileDialog.getOpenFileName(
+            self, "Open Video", "", "Video Files (*.mp4 *.avi *.mov *.mkv)")
+        if fileName[0]:
+            self.__avPlayer.videoPlayer.setSource(
+                QUrl.fromLocalFile(fileName[0]))
+            duration = checkDuration(fileName[0])
+            s = int(duration.split(':')[0])*3600 + \
+                int(duration.split(':')[1])*60 + \
+                int(duration.split(':')[2])
+            self.__mediaControls.setVideoDuration(s*1000)
+            self.__imageExtract.fPath = fileName[0]
+            self.__threads.append(QThread(self))
+            t = self.__threads[-1]
+            self.__imageExtract.moveToThread(t)
+            self.__imageExtract.finished.connect(t.quit)
+            self.__imageExtract.finished.connect(
+                self.__imageExtract.deleteLater)
+            self.__reelDisplay.setDuration(s*1000)
+            t.finished.connect(t.deleteLater)
+            t.started.connect(self.__imageExtract.run)
+            t.start()
         # self.centralWidget().__video_player.play()
 
+    def __openAudioFile(self):
+        fileName = QFileDialog.getOpenFileName(
+            self, "Open Audio", "", "Audio Files (*.mp3 *.wav *.flac)")
+        if fileName[0]:
+            self.__avPlayer.audioPlayer.setSource(
+                QUrl.fromLocalFile(fileName[0]))
+            duration = checkDuration(fileName[0])
+            s = int(duration.split(':')[0])*3600 + \
+                int(duration.split(':')[1])*60 + \
+                int(duration.split(':')[2])
+            self.__mediaControls.setAudioDuration(s*1000)
+            self.__showAudio.plotAudio(fileName[0])
+
     def __connectSignals(self):
-        self.__mediaControls.play.connect(self.__vidPlayer.play)
-        self.__mediaControls.pause.connect(self.__vidPlayer.pause)
-        self.__mediaControls.stop.connect(self.__vidPlayer.stop)
-        self.__mediaControls.seek.connect(
-            self.__vidPlayer.videoPlayer.setPosition)
-        self.__mediaControls.volume.connect(
-            self.__vidPlayer.audio.setVolume)
-        self.__mediaControls.mute.connect(
-            self.__vidPlayer.audio.setMuted)
-        self.__vidPlayer.playPosition.connect(
-            self.__mediaControls.setPlayPosition)
-        self.__mediaControls.completion.connect(self.__reelDisplay.setActive)
+        self.__mediaControls.playVideo.connect(self.__avPlayer.playVideo)
+        self.__mediaControls.pauseVideo.connect(self.__avPlayer.pauseVideo)
+        self.__mediaControls.playAudio.connect(self.__avPlayer.playAudio)
+        self.__mediaControls.pauseAudio.connect(self.__avPlayer.pauseAudio)
+        self.__mediaControls.seekVideo.connect(self.__avPlayer.seekVideo)
+        self.__mediaControls.seekAudio.connect(self.__avPlayer.seekAudio)
+        self.__mediaControls.adjustVolume.connect(self.__avPlayer.adjustVolume)
+        self.__imageExtract.reelImage.connect(self.__reelDisplay.addImage)
+        self.__avPlayer.audioPlayPosition.connect(
+            self.__mediaControls.setAudioPlayPosition)
+        self.__avPlayer.videoPlayPosition.connect(
+            self.__mediaControls.setVideoPlayPosition)
+        self.__avPlayer.videoPlayPosition.connect(
+            self.__reelDisplay.setActive)
 
 
 # |-----------------------------------------------------------------------------|
