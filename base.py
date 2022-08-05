@@ -118,22 +118,45 @@ class VideoEditorMainWindow(QMainWindow):
                 int(duration.split(':')[2])
             self.__mediaControls.setAudioDuration(s*1000)
             self.__showAudio.plotAudio(fileName[0])
+            self.__showAudio.setDuration(s*1000)
 
     def __connectSignals(self):
-        self.__mediaControls.playVideo.connect(self.__avPlayer.playVideo)
-        self.__mediaControls.pauseVideo.connect(self.__avPlayer.pauseVideo)
-        self.__mediaControls.playAudio.connect(self.__avPlayer.playAudio)
-        self.__mediaControls.pauseAudio.connect(self.__avPlayer.pauseAudio)
+        self.__mediaControls.playVideo.connect(
+            self.__avPlayer.videoPlayer.play)
+        self.__mediaControls.pauseVideo.connect(
+            self.__avPlayer.videoPlayer.pause)
+        self.__mediaControls.playAudio.connect(
+            self.__avPlayer.audioPlayer.play)
+        self.__mediaControls.pauseAudio.connect(
+            self.__avPlayer.audioPlayer.pause)
+
+        self.__mediaControls.playAll.connect(
+            self.__avPlayer.videoPlayer.play)
+        self.__mediaControls.playAll.connect(
+            self.__avPlayer.audioPlayer.play)
+        self.__mediaControls.pauseAll.connect(
+            self.__avPlayer.videoPlayer.pause)
+        self.__mediaControls.pauseAll.connect(
+            self.__avPlayer.audioPlayer.pause)
+
         self.__mediaControls.seekVideo.connect(self.__avPlayer.seekVideo)
         self.__mediaControls.seekAudio.connect(self.__avPlayer.seekAudio)
         self.__mediaControls.adjustVolume.connect(self.__avPlayer.adjustVolume)
         self.__imageExtract.reelImage.connect(self.__reelDisplay.addImage)
-        self.__avPlayer.audioPlayPosition.connect(
+
+        self.__avPlayer.audioPlayer.audioPlayPosition.connect(
             self.__mediaControls.setAudioPlayPosition)
-        self.__avPlayer.videoPlayPosition.connect(
+        self.__avPlayer.videoPlayer.videoPlayPosition.connect(
             self.__mediaControls.setVideoPlayPosition)
-        self.__avPlayer.videoPlayPosition.connect(
+        self.__avPlayer.videoPlayer.videoPlayPosition.connect(
             self.__reelDisplay.setActive)
+        self.__avPlayer.audioPlayer.audioPlayPosition.connect(
+            self.__showAudio.setAudioPosition)
+
+        self.__avPlayer.videoPlayer.mediaStatusChanged.connect(
+            self.__mediaControls.setVideoState)
+        self.__avPlayer.audioPlayer.mediaStatusChanged.connect(
+            self.__mediaControls.setAudioState)
 
 
 # |-----------------------------------------------------------------------------|

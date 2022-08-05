@@ -13,6 +13,18 @@ class AudioGraph(FigureCanvas):
         super().__init__(fig)
         self.axes = self.figure.add_subplot(111)
         self.axes.set_axis_off()
+        self.__vl = self.axes.axvline(0, ls='-', color='r', lw=1, zorder=10)
+        self.__duration = 0
+        self.__totalW = 0
+
+    def setAudioPosition(self, pos):
+        p = pos/self.__duration
+        p = p*self.__totalW
+        self.__vl.set_xdata([p, p])
+        self.draw()
+
+    def setDuration(self, duration):
+        self.__duration = duration
 
     def plotAudio(self, audioPath):
         # reading the audio file
@@ -38,5 +50,6 @@ class AudioGraph(FigureCanvas):
             num=len(signal)
         )
         # actual plotting
+        self.__totalW = len(signal)/f_rate
         self.axes.plot(time, signal)
         self.draw()

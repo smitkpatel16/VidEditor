@@ -9,24 +9,72 @@ from PyQt6.QtWidgets import QVBoxLayout
 from PyQt6.QtCore import pyqtSignal
 
 
-class MediaPlayer(QWidget):
+class VideoPlayer(QMediaPlayer):
     videoPlayPosition = pyqtSignal(int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def __createThread(self):
+        self.__t = Thread(target=self.__updateVideoPosition)
+
+    def play(self):
+        self.__createThread()
+        r = super().play()
+        self.__t.start()
+        return r
+
+    def pause(self):
+        r = super().pause()
+        self.__t.join()
+        return r
+
+    def __updateVideoPosition(self):
+        while self.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+            self.videoPlayPosition.emit(self.position())
+            time.sleep(0.1)
+
+
+class AudioPlayer(QMediaPlayer):
     audioPlayPosition = pyqtSignal(int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def __createThread(self):
+        self.__t = Thread(target=self.__updateAudioPosition)
+
+    def play(self):
+        self.__createThread()
+        r = super().play()
+        self.__t.start()
+        return r
+
+    def pause(self):
+        r = super().pause()
+        self.__t.join()
+        return r
+
+    def __updateAudioPosition(self):
+        while self.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+            self.audioPlayPosition.emit(self.position())
+            time.sleep(0.1)
+
+
+class MediaPlayer(QWidget):
 
     def __init__(self):
         super().__init__()
         self.initUI()
         self.__layout = QVBoxLayout()
         self.setLayout(self.__layout)
-        self.videoPlayer = QMediaPlayer(self)
-        self.audioPlayer = QMediaPlayer(self)
+        self.videoPlayer = VideoPlayer(self)
+        self.audioPlayer = AudioPlayer(self)
         self.__meidaDevices = QMediaDevices(self)
         self.__videoWidget = QVideoWidget(self)
-        self.audio = QAudioOutput(self)
+        self.__audio = QAudioOutput(self)
         self.videoPlayer.setVideoOutput(self.__videoWidget)
-        self.audioPlayer.setAudioOutput(self.audio)
-        self.__vt = None
-        self.__at = None
+        self.audioPlayer.setAudioOutput(self.__audio)
         self.__updateAudioOutputs()
         self.__arrangeWidgets()
         self.__connectSignals()
@@ -40,44 +88,12 @@ class MediaPlayer(QWidget):
 
     def __updateAudioOutputs(self):
         ao = self.__meidaDevices.defaultAudioOutput()
-        self.audio.setDevice(ao)
-
-    def __updateVideoPosition(self):
-        while self.videoPlayer.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
-            self.videoPlayPosition.emit(self.videoPlayer.position())
-            time.sleep(0.1)
-
-    def __updateAudioPosition(self):
-        while self.audioPlayer.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
-            self.audioPlayPosition.emit(self.audioPlayer.position())
-            time.sleep(0.1)
+        self.__audio.setDevice(ao)
 
     def initUI(self):
         self.setWindowTitle('Video Editor')
         self.resize(800, 600)
         self.show()
-
-    def playVideo(self):
-        self.videoPlayer.play()
-        self.__vt = Thread(target=self.__updateVideoPosition)
-        self.__vt.start()
-
-    def playAudio(self):
-        self.audioPlayer.play()
-        self.__at = Thread(target=self.__updateAudioPosition)
-        self.__at.start()
-
-    def pauseVideo(self):
-        self.videoPlayer.pause()
-        if self.__vt:
-            self.__vt.join()
-            self.__vt = None
-
-    def pauseAudio(self):
-        self.audioPlayer.pause()
-        if self.__at:
-            self.__at.join()
-            self.__at = None
 
     def seekVideo(self, position):
         self.videoPlayer.setPosition(position)

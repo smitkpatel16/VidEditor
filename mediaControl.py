@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QVBoxLayout
 from PyQt6.QtWidgets import QSlider
 from PyQt6.QtWidgets import QDial
 from PyQt6.QtWidgets import QLabel
+from PyQt6.QtMultimedia import QMediaPlayer
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtCore import Qt
 
@@ -16,6 +17,8 @@ class MediaControls(QWidget):
     pauseVideo = pyqtSignal()
     playAudio = pyqtSignal()
     pauseAudio = pyqtSignal()
+    playAll = pyqtSignal()
+    pauseAll = pyqtSignal()
     stopAll = pyqtSignal()
     seekVideo = pyqtSignal(int)
     seekAudio = pyqtSignal(int)
@@ -98,6 +101,26 @@ class MediaControls(QWidget):
         s = int(s % 60)
         self.__audioLabel.setText('{}h:{}m:{}s'.format(h, m, s))
 
+    def setVideoState(self, state):
+        if state == QMediaPlayer.MediaStatus.EndOfMedia:
+            self.__playVideoSlider.setValue(0)
+            self.__playVideoBtn.setChecked(False)
+            self.__playVideoBtn.setText('Play Video')
+            self.__videoLabel.setText('00:00:00')
+        if not self.__playVideoBtn.isChecked() and not self.__playAudioBtn.isChecked():
+            self.__playBtn.setChecked(False)
+            self.__playBtn.setText('Play')
+
+    def setAudioState(self, state):
+        if state == QMediaPlayer.MediaStatus.EndOfMedia:
+            self.__playAudioSlider.setValue(0)
+            self.__playAudioBtn.setChecked(False)
+            self.__playAudioBtn.setText('Play Audio')
+            self.__audioLabel.setText('00:00:00')
+        if not self.__playVideoBtn.isChecked() and not self.__playAudioBtn.isChecked():
+            self.__playBtn.setChecked(False)
+            self.__playBtn.setText('Play')
+
     def stop(self):
         pass
 
@@ -127,22 +150,20 @@ class MediaControls(QWidget):
     def __play(self):
         if self.__playBtn.isChecked():
             self.__playBtn.setText('Pause')
-            self.playAudio.emit()
             self.__playAudioBtn.setChecked(True)
             self.__playAudioBtn.setText('Pause Audio')
-            self.playVideo.emit()
             self.__playVideoBtn.setChecked(True)
             self.__playVideoBtn.setText('Pause Video')
             self.__stopBtn.setEnabled(True)
+            self.playAll.emit()
         else:
             self.__playBtn.setText('Play')
-            self.pauseAudio.emit()
             self.__playAudioBtn.setChecked(False)
             self.__playAudioBtn.setText('Play Audio')
-            self.pauseVideo.emit()
             self.__playVideoBtn.setChecked(False)
             self.__playVideoBtn.setText('Play Video')
             self.__stopBtn.setEnabled(False)
+            self.pauseAll.emit()
 
     def __playVideo(self):
         if self.__playVideoBtn.isChecked():
