@@ -1,10 +1,35 @@
 from PyQt6.QtWidgets import QGraphicsView
 from PyQt6.QtWidgets import QGraphicsScene
+from PyQt6.QtWidgets import QGraphicsItem
+from PyQt6.QtWidgets import QGraphicsLineItem
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QObject
 from PyQt6.QtGui import QColor
 from PyQt6.QtGui import QPen
 from PyQt6.QtGui import QBrush
+from PyQt6.QtCore import pyqtSignal
+
+
+# ===============================================================================
+# SelectionLine- Inherited QGraphicsLineItem for selection movement
+# ===============================================================================
+class SelectionLine(QGraphicsLineItem):
+    updateHighlight = pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setPen(QPen(Qt.GlobalColor.red, 3))
+        self.setFlags(
+            self.GraphicsItemFlag.ItemSendsScenePositionChanges)
+
+    def itemChange(self, change, value):
+        if change == self.GraphicsItemChange.ItemPositionChange:
+            # restrict vertical movement
+            value.setY(0)
+        return super().itemChange(change, value)
+
+
 # create a qgraphicsview widget to display reel of images array
 # ===============================================================================
 # MetaDisplay -
@@ -22,16 +47,60 @@ class MetaDisplay(QGraphicsView):
         self.__brush = QBrush(QColor(127, 127, 255, 127))
         self.__r = None
         self.__totalW = 0
+        self.__connected = False
+        self.__sl = []
+        self.__selection = []
 
-    # add image to the scene
+    # add selection range
+
+    def addSelection(self):
+        if self.__connected:
+            self.display.changed.disconnect()
+        l1 = SelectionLine(0, 0, 0, 80)
+        l1.setPos(0, 0)
+        l1.setZValue(10000)
+        l1.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.__sl.append(l1)
+
+        l2 = SelectionLine(0, 0, 0, 80)
+        l2.setPos(10, 0)
+        l2.setZValue(10000)
+        l2.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.__sl.append(l2)
+        self.display.addItem(l1)
+        self.display.addItem(l2)
+        self.__highlight()
+
+    # highlight the selected area
+
+    def mouseMoveEvent(self, event):
+        self.__highlight()
+        return super().mouseMoveEvent(event)
+
+    def __highlight(self):
+        for s in self.__selection:
+            self.display.removeItem(s)
+        self.__selection.clear()
+        self.__sl = sorted(self.__sl, key=lambda p: p.x())
+        for i, j in enumerate(range(0, len(self.__sl), 2)):
+            x = self.__sl[j].scenePos().x()
+            y = 0
+            w = self.__sl[i*2+1].scenePos().x()-x
+            h = 80
+            self.__selection.append(self.display.addRect(x, y, w, h, QPen(
+                Qt.GlobalColor.red, 1), QBrush(QColor(255, 127, 127, 127))))
+            # add image to the scene
+
     def addImage(self, qImg):
         pm = QPixmap.fromImage(qImg)
         pmi = self.display.addPixmap(pm)
         pmi.setPos(self.__count * pm.width(), 0)
         if not self.__r:
-            self.__r = self.display.addRect(
-                0, 0, pm.width(), pm.height(), self.__pen, self.__brush)
-            self.__r.setZValue(10000)
+            self.__r = self.display.addLine(
+                0, 0, 0, pm.height(), self.__pen)
+            self.__r.setZValue(5000)
         self.__count += 1
         self.__totalW += pm.width()
 
@@ -39,6 +108,6 @@ class MetaDisplay(QGraphicsView):
         self.__duration = duration
 
     def setActive(self, c):
-        p = c/self.__duration
+        p = round(c/self.__duration, 3)
         p = p*self.__totalW
         self.__r.setPos(p, 0)

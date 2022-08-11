@@ -26,12 +26,15 @@ class ExtractImages(QObject):
         :return: imageArray
         """
         capture = cv2.VideoCapture(self.fPath)
-        # get equally spaced 100 frames from the video
+        # get equally spaced frames from the video
         frameCount = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
         fW = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         fH = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
         r = fW / fH
-        frameInterval = math.ceil(frameCount / 100)
+        if frameCount < 200:
+            frameInterval = 1
+        else:
+            frameInterval = math.ceil(frameCount / 100)
         success, image = capture.read()
         count = 0
 
@@ -54,23 +57,28 @@ def checkDuration(filePath):
     :return: duration
     """
     # get the meta info for the selected video
-    file = Path(filePath)
-    ns = sh.NameSpace(str(file.parent))
-    item = ns.ParseName(str(file.name))
-    colnum = 0
-    columns = []
-    while True:
-        colname = ns.GetDetailsOf(None, colnum)
-        if not colname:
-            break
-        columns.append(colname)
-        colnum += 1
-    metaData = {}
+    # file = Path(filePath)
+    # ns = sh.NameSpace(str(file.parent))
+    # item = ns.ParseName(str(file.name))
+    # colnum = 0
+    # columns = []
+    # while True:
+    #     colname = ns.GetDetailsOf(None, colnum)
+    #     if not colname:
+    #         break
+    #     columns.append(colname)
+    #     colnum += 1
+    # metaData = {}
 
-    for colnum in range(len(columns)):
-        colval = ns.GetDetailsOf(item, colnum)
-        if colval:
-            metaData[columns[colnum].lower()] = colval
-    # length or duration of the video
-    duration = metaData.get('length') or metaData.get('duration')
-    return duration
+    # for colnum in range(len(columns)):
+    #     colval = ns.GetDetailsOf(item, colnum)
+    #     if colval:
+    #         metaData[columns[colnum].lower()] = colval
+    # # length or duration of the video
+    # duration = metaData.get('length') or metaData.get('duration')
+    # return duration
+    capture = cv2.VideoCapture(filePath)
+    frameCount = capture.get(cv2.CAP_PROP_FRAME_COUNT)
+    frameRate = capture.get(cv2.CAP_PROP_FPS)
+    dur = frameCount/frameRate
+    return round(dur, 3)

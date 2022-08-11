@@ -33,6 +33,7 @@ class VideoPlayer(QMediaPlayer):
         while self.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
             self.videoPlayPosition.emit(self.position())
             time.sleep(0.1)
+        self.videoPlayPosition.emit(self.position())
 
 
 class AudioPlayer(QMediaPlayer):
@@ -59,6 +60,7 @@ class AudioPlayer(QMediaPlayer):
         while self.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
             self.audioPlayPosition.emit(self.position())
             time.sleep(0.1)
+        self.audioPlayPosition.emit(self.position())
 
 
 class MediaPlayer(QWidget):

@@ -48,11 +48,34 @@ class VideoEditorMainWindow(QMainWindow):
         self.setWindowTitle("Video Editor")
         self.__mediaControls = MediaControls()
         self.__avPlayer = MediaPlayer()
-        self.setGeometry(300, 300, 800, 600)
+        self.__imageExtract = ExtractImages()
+        self.__showAudio = AudioGraph()
+        self.__reelDisplay = MetaDisplay()
+        self.__threads = []
+        policy = QSizePolicy(QSizePolicy.Policy.Expanding,
+                             QSizePolicy.Policy.Expanding)
+        self.__avPlayer.setSizePolicy(policy)
+
+        self.__initUI()
+
+        self.__connectSignals()
         # Add a menu bar
+        self.__createMenu()
+        self.show()
+
+    def __initUI(self):
+        self.setGeometry(300, 300, 800, 600)
+        self.setCentralWidget(CentralWidget())
+        self.centralWidget().addWidget(self.__avPlayer)
+        self.__reelDisplay.setMaximumHeight(100)
+        self.centralWidget().addWidget(self.__reelDisplay)
+        self.centralWidget().addWidget(self.__mediaControls)
+        self.centralWidget().addWidget(self.__showAudio)
+
+    def __createMenu(self):
         self.__menuBar = self.menuBar()
         self.__fileMenu = self.__menuBar.addMenu("File")
-        self.__reelDisplay = MetaDisplay()
+
         openVideo = QAction("Open Video", self)
         self.__fileMenu.addAction(openVideo)
         openVideo.triggered.connect(self.__openVideoFile)
@@ -61,22 +84,11 @@ class VideoEditorMainWindow(QMainWindow):
         self.__fileMenu.addAction(openAudio)
         openAudio.triggered.connect(self.__openAudioFile)
 
-        self.setCentralWidget(CentralWidget())
-        self.centralWidget().addWidget(self.__avPlayer)
-        policy = QSizePolicy(QSizePolicy.Policy.Expanding,
-                             QSizePolicy.Policy.Expanding)
-        self.__avPlayer.setSizePolicy(policy)
-        self.__reelDisplay.setMaximumHeight(100)
-        self.centralWidget().addWidget(self.__reelDisplay)
-        self.centralWidget().addWidget(self.__mediaControls)
+        self.__selectMenu = self.__menuBar.addMenu("Select")
 
-        self.__threads = []
-        self.__imageExtract = ExtractImages()
-        self.__showAudio = AudioGraph()
-        self.centralWidget().addWidget(self.__showAudio)
-        self.__connectSignals()
-        self.show()
-    # close the video player thread if active
+        selectVideo = QAction("Select Video", self)
+        self.__selectMenu.addAction(selectVideo)
+        selectVideo.triggered.connect(self.__reelDisplay.addSelection)
 
     def closeEvent(self, event):
         # self.__avPlayer.stop()
@@ -89,9 +101,10 @@ class VideoEditorMainWindow(QMainWindow):
             self.__avPlayer.videoPlayer.setSource(
                 QUrl.fromLocalFile(fileName[0]))
             duration = checkDuration(fileName[0])
-            s = int(duration.split(':')[0])*3600 + \
-                int(duration.split(':')[1])*60 + \
-                int(duration.split(':')[2])
+            s = duration
+            # s = int(duration.split(':')[0])*3600 + \
+            #     int(duration.split(':')[1])*60 + \
+            #     int(duration.split(':')[2])
             self.__mediaControls.setVideoDuration(s*1000)
             self.__imageExtract.fPath = fileName[0]
             self.__threads.append(QThread(self))
