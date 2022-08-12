@@ -171,6 +171,11 @@ class VideoEditorMainWindow(QMainWindow):
         self.__avPlayer.audioPlayer.mediaStatusChanged.connect(
             self.__mediaControls.setAudioState)
 
+        self.__reelDisplay.selectionMarked.connect(
+            self.__avPlayer.videoPlayer.addSelection)
+        self.__reelDisplay.clearSelection.connect(
+            self.__avPlayer.videoPlayer.clearSelection)
+
 
 # |-----------------------------------------------------------------------------|
 # main executor :- runApplication

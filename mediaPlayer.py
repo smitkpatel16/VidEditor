@@ -13,27 +13,31 @@ class VideoPlayer(QMediaPlayer):
     videoPlayPosition = pyqtSignal(int)
 
     def __init__(self, parent=None):
+        self.__selection = []
+        self.__selectionPlay = 0
         super().__init__(parent)
+        self.positionChanged.connect(self.__positionChanged)
 
-    def __createThread(self):
-        self.__t = Thread(target=self.__updateVideoPosition)
+    def __positionChanged(self, position):
+        if self.__selection and self.__selectionPlay < len(self.__selection):
+            if position >= self.__selection[self.__selectionPlay][1]:
+                self.__selectionPlay += 1
+                if self.__selectionPlay == len(self.__selection):
+                    print('end of selection')
+                    self.stop()
+                    return
+                self.setPosition(self.__selection[self.__selectionPlay][0])
+        self.videoPlayPosition.emit(position)
 
-    def play(self):
-        self.__createThread()
-        r = super().play()
-        self.__t.start()
-        return r
+    def clearSelection(self):
+        self.__selection.clear()
 
-    def pause(self):
-        r = super().pause()
-        self.__t.join()
-        return r
-
-    def __updateVideoPosition(self):
-        while self.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
-            self.videoPlayPosition.emit(self.position())
-            time.sleep(0.1)
-        self.videoPlayPosition.emit(self.position())
+    def addSelection(self, se):
+        start = se[0]
+        end = se[1]
+        if not self.__selection:
+            self.setPosition(start)
+        self.__selection.append((start, end))
 
 
 class AudioPlayer(QMediaPlayer):
