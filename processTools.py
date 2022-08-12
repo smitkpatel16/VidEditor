@@ -1,6 +1,10 @@
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtCore import QObject
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage
+from PyQt6.QtWidgets import QGraphicsLineItem
+from PyQt6.QtGui import QPen
+from PyQt6.QtWidgets import QApplication
 import cv2
 import math
 from pathlib import Path
@@ -82,3 +86,46 @@ def checkDuration(filePath):
     frameRate = capture.get(cv2.CAP_PROP_FPS)
     dur = frameCount/frameRate
     return round(dur, 3)
+
+# find duration of the audio file using wave module
+
+
+def checkDurationAudio(filePath):
+    """
+    Checks the duration of a audio file.
+    :param filePath: The path to the audio file.
+    :return: duration
+    """
+    import wave
+    raw = wave.open(filePath)
+    f_rate = raw.getframerate()
+    f_length = raw.getnframes() / f_rate
+    return round(f_length, 3)
+
+
+# ===============================================================================
+# SelectionLine- Inherited QGraphicsLineItem for selection movement
+# ===============================================================================
+class SelectionLine(QGraphicsLineItem):
+    updateHighlight = pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setPen(QPen(Qt.GlobalColor.red, 3))
+        self.setFlags(
+            self.GraphicsItemFlag.ItemSendsScenePositionChanges)
+        self.setAcceptHoverEvents(True)
+
+    def itemChange(self, change, value):
+        if change == self.GraphicsItemChange.ItemPositionChange:
+            # restrict vertical movement
+            value.setY(0)
+        return super().itemChange(change, value)
+
+    def hoverEnterEvent(self, event):
+        QApplication.setOverrideCursor(Qt.CursorShape.SizeHorCursor)
+        return super().hoverEnterEvent(event)
+
+    def hoverLeaveEvent(self, event):
+        QApplication.restoreOverrideCursor()
+        return super().hoverLeaveEvent(event)

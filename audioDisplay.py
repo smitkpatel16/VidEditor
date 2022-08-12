@@ -5,6 +5,8 @@ from matplotlib.backends.qt_compat import QtWidgets
 from matplotlib.backends.backend_qtagg import (
     FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
+from processTools import SelectionLine
+from PyQt6.QtWidgets import QGraphicsItem
 
 
 class AudioGraph(FigureCanvas):
@@ -16,15 +18,37 @@ class AudioGraph(FigureCanvas):
         self.__vl = self.axes.axvline(0, ls='-', color='r', lw=1, zorder=10)
         self.__duration = 0
         self.__totalW = 0
+        self.__sl = []
+    #     self.addSelection()
 
-    def setAudioPosition(self, pos):
-        p = pos/self.__duration
-        p = p*self.__totalW
-        self.__vl.set_xdata([p, p])
-        self.draw()
+    # def addSelection(self):
+    #     l1 = SelectionLine(0, 0, 0, 80)
+    #     l1.setPos(0, 0)
+    #     l1.setZValue(10000)
+    #     l1.setFlag(
+    #         QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+    #     self.__sl.append(l1)
+
+    #     l2 = SelectionLine(0, 0, 0, 80)
+    #     l2.setPos(10, 0)
+    #     l2.setZValue(10000)
+    #     l2.setFlag(
+    #         QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+    #     self.__sl.append(l2)
+    #     self.figure.addItem(l1)
+    #     self.figure.addItem(l2)
 
     def setDuration(self, duration):
         self.__duration = duration
+        self.setAudioPosition(0)
+
+    def setAudioPosition(self, pos):
+        if self.__duration:
+            p = pos/self.__duration
+            p = p*self.__totalW
+            print(p)
+            self.__vl.set_xdata([p, p])
+            self.draw()
 
     def plotAudio(self, audioPath):
         # reading the audio file

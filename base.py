@@ -3,6 +3,7 @@ from metaDisplay import MetaDisplay
 from mediaPlayer import MediaPlayer
 from processTools import ExtractImages
 from processTools import checkDuration
+from processTools import checkDurationAudio
 from audioDisplay import AudioGraph
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QUrl
@@ -125,13 +126,13 @@ class VideoEditorMainWindow(QMainWindow):
         if fileName[0]:
             self.__avPlayer.audioPlayer.setSource(
                 QUrl.fromLocalFile(fileName[0]))
-            duration = checkDuration(fileName[0])
-            s = int(duration.split(':')[0])*3600 + \
-                int(duration.split(':')[1])*60 + \
-                int(duration.split(':')[2])
+            duration = checkDurationAudio(fileName[0])
+            # s = int(duration.split(':')[0])*3600 + \
+            #     int(duration.split(':')[1])*60 + \
+            #     int(duration.split(':')[2])
+            s = duration
             self.__mediaControls.setAudioDuration(s*1000)
             self.__showAudio.plotAudio(fileName[0])
-            self.__showAudio.setDuration(s*1000)
 
     def __connectSignals(self):
         self.__mediaControls.playVideo.connect(
@@ -157,13 +158,13 @@ class VideoEditorMainWindow(QMainWindow):
         self.__mediaControls.adjustVolume.connect(self.__avPlayer.adjustVolume)
         self.__imageExtract.reelImage.connect(self.__reelDisplay.addImage)
 
-        self.__avPlayer.audioPlayer.audioPlayPosition.connect(
+        self.__avPlayer.audioPlayer.positionChanged.connect(
             self.__mediaControls.setAudioPlayPosition)
-        self.__avPlayer.videoPlayer.videoPlayPosition.connect(
+        self.__avPlayer.videoPlayer.positionChanged.connect(
             self.__mediaControls.setVideoPlayPosition)
-        self.__avPlayer.videoPlayer.videoPlayPosition.connect(
+        self.__avPlayer.videoPlayer.positionChanged.connect(
             self.__reelDisplay.setActive)
-        self.__avPlayer.audioPlayer.audioPlayPosition.connect(
+        self.__avPlayer.audioPlayer.positionChanged.connect(
             self.__showAudio.setAudioPosition)
 
         self.__avPlayer.videoPlayer.mediaStatusChanged.connect(

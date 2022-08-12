@@ -1,42 +1,13 @@
 from PyQt6.QtWidgets import QGraphicsView
 from PyQt6.QtWidgets import QGraphicsScene
 from PyQt6.QtWidgets import QGraphicsItem
-from PyQt6.QtWidgets import QGraphicsLineItem
-from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from PyQt6.QtGui import QPen
 from PyQt6.QtGui import QBrush
 from PyQt6.QtCore import pyqtSignal
-
-
-# ===============================================================================
-# SelectionLine- Inherited QGraphicsLineItem for selection movement
-# ===============================================================================
-class SelectionLine(QGraphicsLineItem):
-    updateHighlight = pyqtSignal()
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setPen(QPen(Qt.GlobalColor.red, 3))
-        self.setFlags(
-            self.GraphicsItemFlag.ItemSendsScenePositionChanges)
-        self.setAcceptHoverEvents(True)
-
-    def itemChange(self, change, value):
-        if change == self.GraphicsItemChange.ItemPositionChange:
-            # restrict vertical movement
-            value.setY(0)
-        return super().itemChange(change, value)
-
-    def hoverEnterEvent(self, event):
-        QApplication.setOverrideCursor(Qt.CursorShape.SizeHorCursor)
-        return super().hoverEnterEvent(event)
-
-    def hoverLeaveEvent(self, event):
-        QApplication.restoreOverrideCursor()
-        return super().hoverLeaveEvent(event)
+from processTools import SelectionLine
 
 
 # create a qgraphicsview widget to display reel of images array
@@ -58,7 +29,6 @@ class MetaDisplay(QGraphicsView):
         self.__pen = QPen(Qt.GlobalColor.green, 3)
         self.__r = None
         self.__totalW = 0
-        self.__connected = False
         self.__sl = []
         self.__selection = []
         self.__duration = 0
@@ -66,8 +36,6 @@ class MetaDisplay(QGraphicsView):
     # add selection range
 
     def addSelection(self):
-        if self.__connected:
-            self.display.changed.disconnect()
         l1 = SelectionLine(0, 0, 0, 80)
         l1.setPos(0, 0)
         l1.setZValue(10000)

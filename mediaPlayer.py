@@ -10,7 +10,6 @@ from PyQt6.QtCore import pyqtSignal
 
 
 class VideoPlayer(QMediaPlayer):
-    videoPlayPosition = pyqtSignal(int)
 
     def __init__(self, parent=None):
         self.__selection = []
@@ -27,7 +26,6 @@ class VideoPlayer(QMediaPlayer):
                     self.stop()
                     return
                 self.setPosition(self.__selection[self.__selectionPlay][0])
-        self.videoPlayPosition.emit(position)
 
     def clearSelection(self):
         self.__selection.clear()
@@ -41,30 +39,9 @@ class VideoPlayer(QMediaPlayer):
 
 
 class AudioPlayer(QMediaPlayer):
-    audioPlayPosition = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-
-    def __createThread(self):
-        self.__t = Thread(target=self.__updateAudioPosition)
-
-    def play(self):
-        self.__createThread()
-        r = super().play()
-        self.__t.start()
-        return r
-
-    def pause(self):
-        r = super().pause()
-        self.__t.join()
-        return r
-
-    def __updateAudioPosition(self):
-        while self.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
-            self.audioPlayPosition.emit(self.position())
-            time.sleep(0.1)
-        self.audioPlayPosition.emit(self.position())
 
 
 class MediaPlayer(QWidget):
