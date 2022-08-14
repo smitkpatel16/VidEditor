@@ -71,6 +71,7 @@ class VideoEditorMainWindow(QMainWindow):
         self.__reelDisplay.setMaximumHeight(100)
         self.centralWidget().addWidget(self.__reelDisplay)
         self.centralWidget().addWidget(self.__mediaControls)
+        self.__showAudio.setMaximumHeight(100)
         self.centralWidget().addWidget(self.__showAudio)
 
     def __createMenu(self):
@@ -90,6 +91,10 @@ class VideoEditorMainWindow(QMainWindow):
         selectVideo = QAction("Select Video", self)
         self.__selectMenu.addAction(selectVideo)
         selectVideo.triggered.connect(self.__reelDisplay.addSelection)
+
+        selectAudio = QAction("Select Audio", self)
+        self.__selectMenu.addAction(selectAudio)
+        selectAudio.triggered.connect(self.__showAudio.addSelection)
 
     def closeEvent(self, event):
         # self.__avPlayer.stop()

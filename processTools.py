@@ -5,9 +5,9 @@ from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import QGraphicsLineItem
 from PyQt6.QtGui import QPen
 from PyQt6.QtWidgets import QApplication
+from matplotlib.lines import Line2D
 import cv2
 import math
-from pathlib import Path
 import win32com.client
 sh = win32com.client.gencache.EnsureDispatch('Shell.Application', 0)
 
