@@ -85,4 +85,4 @@ class MediaPlayer(QWidget):
         self.audioPlayer.setPosition(position)
 
     def adjustVolume(self, volume):
-        self.audio.setVolume(volume)
+        self.__audio.setVolume(volume)
