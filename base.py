@@ -133,6 +133,7 @@ class VideoEditorMainWindow(QMainWindow):
             s = duration
             self.__mediaControls.setAudioDuration(s*1000)
             self.__showAudio.plotAudio(fileName[0])
+            self.__showAudio.setDuration(s*1000)
 
     def __connectSignals(self):
         self.__mediaControls.playVideo.connect(

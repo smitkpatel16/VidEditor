@@ -46,7 +46,6 @@ class AudioGraph(FigureCanvas):
         if self.__duration:
             p = pos/self.__duration
             p = p*self.__totalW
-            print(p)
             self.__vl.set_xdata([p, p])
             self.draw()
 

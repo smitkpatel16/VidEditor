@@ -36,15 +36,18 @@ class MetaDisplay(QGraphicsView):
     # add selection range
 
     def addSelection(self):
+        viewportRect = self.viewport().rect()
+        visibleSceneRect = self.mapToScene(viewportRect).boundingRect()
+        visibleX = visibleSceneRect.x()+visibleSceneRect.width()//2
         l1 = SelectionLine(0, 0, 0, 80)
-        l1.setPos(0, 0)
+        l1.setPos(visibleX, 0)
         l1.setZValue(10000)
         l1.setFlag(
             QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.__sl.append(l1)
 
         l2 = SelectionLine(0, 0, 0, 80)
-        l2.setPos(10, 0)
+        l2.setPos(visibleX+10, 0)
         l2.setZValue(10000)
         l2.setFlag(
             QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
