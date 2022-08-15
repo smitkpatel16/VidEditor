@@ -1,12 +1,9 @@
-import time
-from threading import Thread
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 from PyQt6.QtMultimedia import QAudioOutput
 from PyQt6.QtMultimedia import QMediaPlayer
 from PyQt6.QtMultimedia import QMediaDevices
 from PyQt6.QtWidgets import QVBoxLayout
-from PyQt6.QtCore import pyqtSignal
 
 
 class VideoPlayer(QMediaPlayer):
@@ -22,7 +19,6 @@ class VideoPlayer(QMediaPlayer):
             if position >= self.__selection[self.__selectionPlay][1]:
                 self.__selectionPlay += 1
                 if self.__selectionPlay == len(self.__selection):
-                    print('end of selection')
                     self.stop()
                     return
                 self.setPosition(self.__selection[self.__selectionPlay][0])

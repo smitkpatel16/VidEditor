@@ -5,7 +5,6 @@ from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import QGraphicsLineItem
 from PyQt6.QtGui import QPen
 from PyQt6.QtWidgets import QApplication
-from matplotlib.lines import Line2D
 import cv2
 import math
 import win32com.client

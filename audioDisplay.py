@@ -1,4 +1,3 @@
-from turtle import forward
 import wave
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvas
@@ -31,14 +30,30 @@ class AudioGraph(QWidget):
             left=0.0, right=1.0, bottom=0.0, top=1.0, hspace=0.0, wspace=0.0)
         self.axes.set_axis_off()
         self.__vl = None
-        fig.canvas.mpl_connect('motion_notify_event', self.__mouseHover)
+        fig.canvas.mpl_connect('motion_notify_event', self.__mouseMove)
+        fig.canvas.mpl_connect('button_press_event', self.__select)
+        fig.canvas.mpl_connect('button_release_event', self.__unselect)
         self.__duration = 0
         self.__totalW = 0
         self.__selection = []
         self.__sl = []
+        self.__selectedMarker = None
         # self.addSelection()
 
-    def __mouseHover(self, event):
+    def __select(self, event):
+        for sl in self.__sl:
+            c = sl.contains(event)[0]
+            if c:
+                self.__selectedMarker = sl
+                self.__selectedMarker.set_color('b')
+                self.__canvas.draw()
+
+    def __unselect(self, event):
+        self.__selectedMarker.set_color('r')
+        self.__selectedMarker = None
+        self.__canvas.draw()
+
+    def __mouseMove(self, event):
         c = []
         for sl in self.__sl:
             c.append(sl.contains(event)[0])
@@ -46,22 +61,25 @@ class AudioGraph(QWidget):
             QApplication.setOverrideCursor(Qt.CursorShape.SizeHorCursor)
         else:
             QApplication.restoreOverrideCursor()
+        if self.__selectedMarker:
+            self.__selectedMarker.set_xdata([event.xdata, event.xdata])
+            self.__highlight()
+            self.__canvas.draw()
 
     def __highlight(self):
+        for p in self.__selection:
+            p.remove()
+        self.__selection.clear()
         self.__sl = sorted(self.__sl, key=lambda p: p.get_xdata()[0])
-        print(self.axes.bbox.height)
         for i, j in enumerate(range(0, len(self.__sl), 2)):
             x = self.__sl[j].get_xdata()[0]
             w = self.__sl[i*2+1].get_xdata()[0]-x
             h = self.axes.get_ylim()[1]-self.axes.get_ylim()[0]
             rect = Rectangle((x, self.axes.get_ylim()[
                              0]), w, h, facecolor='r', alpha=0.5)
+            self.__selection.append(rect)
             self.axes.add_patch(rect)
             rect.set_zorder(100)
-
-    def onClick(self, event):
-        if event.artist:
-            print("MouseEvent", event.mouseevent.x)
 
     def addSelection(self):
         self.__sl.append(self.axes.axvline(
