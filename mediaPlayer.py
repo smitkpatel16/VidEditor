@@ -26,12 +26,12 @@ class VideoPlayer(QMediaPlayer):
     def clearSelection(self):
         self.__selection.clear()
 
-    def addSelection(self, se):
-        start = se[0]
-        end = se[1]
-        if not self.__selection:
-            self.setPosition(start)
-        self.__selection.append((start, end))
+    def addSelection(self, selections):
+        for se in selections:
+            start = se[0]
+            if not self.__selection:
+                self.setPosition(start)
+            self.__selection.append(se)
 
 
 class AudioPlayer(QMediaPlayer):

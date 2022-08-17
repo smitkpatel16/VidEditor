@@ -1,3 +1,4 @@
+from buildTimeline import BuildTimeline
 from mediaControl import MediaControls
 from metaDisplay import MetaDisplay
 from mediaPlayer import MediaPlayer
@@ -52,6 +53,7 @@ class VideoEditorMainWindow(QMainWindow):
         self.__imageExtract = ExtractImages()
         self.__showAudio = AudioGraph()
         self.__reelDisplay = MetaDisplay()
+        self.__timeline = BuildTimeline()
         self.__threads = []
         policy = QSizePolicy(QSizePolicy.Policy.Expanding,
                              QSizePolicy.Policy.Expanding)
@@ -73,6 +75,7 @@ class VideoEditorMainWindow(QMainWindow):
         self.centralWidget().addWidget(self.__mediaControls)
         self.__showAudio.setMaximumHeight(100)
         self.centralWidget().addWidget(self.__showAudio)
+        self.centralWidget().addWidget(self.__timeline)
 
     def __createMenu(self):
         self.__menuBar = self.menuBar()
@@ -170,6 +173,8 @@ class VideoEditorMainWindow(QMainWindow):
             self.__mediaControls.setVideoPlayPosition)
         self.__avPlayer.videoPlayer.positionChanged.connect(
             self.__reelDisplay.setActive)
+        self.__avPlayer.videoPlayer.positionChanged.connect(
+            self.__timeline.seekSliderVideo)
         self.__avPlayer.audioPlayer.positionChanged.connect(
             self.__showAudio.setAudioPosition)
 
@@ -182,6 +187,10 @@ class VideoEditorMainWindow(QMainWindow):
             self.__avPlayer.videoPlayer.addSelection)
         self.__reelDisplay.clearSelection.connect(
             self.__avPlayer.videoPlayer.clearSelection)
+        self.__reelDisplay.selectionMarked.connect(
+            self.__timeline.addSelectionVideo)
+        self.__reelDisplay.clearSelection.connect(
+            self.__timeline.clearSelectionVideo)
 
 
 # |-----------------------------------------------------------------------------|

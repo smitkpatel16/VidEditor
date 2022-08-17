@@ -17,7 +17,7 @@ from processTools import SelectionLine
 
 
 class MetaDisplay(QGraphicsView):
-    selectionMarked = pyqtSignal(tuple)
+    selectionMarked = pyqtSignal(list)
     clearSelection = pyqtSignal()
 
     # constructor
@@ -68,7 +68,7 @@ class MetaDisplay(QGraphicsView):
         self.__selection.clear()
         self.clearSelection.emit()
         self.__sl = sorted(self.__sl, key=lambda p: p.x())
-
+        selection = []
         for i, j in enumerate(range(0, len(self.__sl), 2)):
             x = self.__sl[j].scenePos().x()
             y = 0
@@ -76,10 +76,11 @@ class MetaDisplay(QGraphicsView):
             h = 80
             start = (x/self.__totalW) * self.__duration
             end = ((x+w)/self.__totalW) * self.__duration
-            self.selectionMarked.emit((int(start), int(end)))
+            selection.append((start, end))
             self.__selection.append(self.display.addRect(x, y, w, h, QPen(
                 Qt.GlobalColor.red, 1), QBrush(QColor(255, 127, 127, 127))))
             # add image to the scene
+        self.selectionMarked.emit(selection)
 
     def addImage(self, qImg):
         pm = QPixmap.fromImage(qImg)
