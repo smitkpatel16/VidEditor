@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QFileDialog
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtWidgets import QMainWindow
+from PyQt6.QtMultimedia import QMediaPlayer
 from buildTimeline import BuildTimeline
 from mediaControl import MediaControls
 from metaDisplay import MetaDisplay
@@ -171,15 +172,9 @@ class VideoEditorMainWindow(QMainWindow):
 
         self.__avPlayer.audioPlayer.positionChanged.connect(
             self.__mediaControls.setAudioPlayPosition)
-        self.__avPlayer.videoPlayer.positionChanged.connect(
-            self.__mediaControls.setVideoPlayPosition)
-        self.__avPlayer.videoPlayer.positionChanged.connect(
-            self.__reelDisplay.setActive)
-        self.__avPlayer.videoPlayer.positionChanged.connect(
-            self.__timeline.seekSliderVideo)
 
         self.__avPlayer.videoPlayer.mediaStatusChanged.connect(
-            self.__mediaControls.setVideoState)
+            self.__setVideoState)
         self.__avPlayer.audioPlayer.mediaStatusChanged.connect(
             self.__mediaControls.setAudioState)
 
@@ -191,6 +186,18 @@ class VideoEditorMainWindow(QMainWindow):
             self.__timeline.addSelectionVideo)
         self.__reelDisplay.clearSelection.connect(
             self.__timeline.clearSelectionVideo)
+
+    def __setVideoState(self, state):
+        self.__mediaControls.setVideoState(state)
+        if state == QMediaPlayer.MediaStatus.EndOfMedia:
+            self.__avPlayer.videoPlayer.positionChanged.disconnect()
+        if state == QMediaPlayer.MediaStatus.BufferedMedia or state == QMediaPlayer.MediaStatus.BufferingMedia:
+            self.__avPlayer.videoPlayer.positionChanged.connect(
+                self.__mediaControls.setVideoPlayPosition)
+            self.__avPlayer.videoPlayer.positionChanged.connect(
+                self.__reelDisplay.setActive)
+            self.__avPlayer.videoPlayer.positionChanged.connect(
+                self.__timeline.seekSliderVideo)
 
 
 # |-----------------------------------------------------------------------------|

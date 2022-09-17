@@ -23,8 +23,9 @@ from processTools import SelectionLine
 class MetaDisplay(QGraphicsView):
     selectionMarked = pyqtSignal(list)
     clearSelection = pyqtSignal()
-
+    calledCount = 0
     # constructor
+
     def __init__(self, parent=None):
         super(MetaDisplay, self).__init__(parent)
         self.display = QGraphicsScene()
@@ -102,12 +103,12 @@ class MetaDisplay(QGraphicsView):
 
     def setActive(self, c):
         if self.__duration:
-            viewportRect = self.viewport().rect()
-            visibleSceneRect = self.mapToScene(viewportRect).boundingRect()
+            # viewportRect = self.viewport().rect()
+            # visibleSceneRect = self.mapToScene(viewportRect).boundingRect()
             p = round(c/self.__duration, 3)
             p = p*self.__totalW
-            if p > visibleSceneRect.x() + visibleSceneRect.width() or p < visibleSceneRect.x():
-                self.centerOn(p, 0)
+            # if p > visibleSceneRect.x() + visibleSceneRect.width() or p < visibleSceneRect.x():
+            self.centerOn(p, 0)
             self.__r.setPos(p, 0)
 
     def plotAudio(self, audioPath):
