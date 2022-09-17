@@ -30,15 +30,20 @@ class MetaDisplay(QGraphicsView):
         super(MetaDisplay, self).__init__(parent)
         self.display = QGraphicsScene()
         self.setScene(self.display)
-        self.__count = 0
         self.__pen = QPen(Qt.GlobalColor.green, 3)
-        self.__r = None
+        self.clearDisplay()
+
+    # add selection range
+
+    def clearDisplay(self):
+        # to clear out when a new video is opened (only 1 supported currently)
+        self.__count = 0
         self.__totalW = 0
+        self.__r = None
         self.__sl = []
         self.__selection = []
         self.__duration = 0
-
-    # add selection range
+        self.display.clear()
 
     def addSelection(self):
         viewportRect = self.viewport().rect()
@@ -130,6 +135,7 @@ class MetaDisplay(QGraphicsView):
         # to create a Time Vector
         # spaced linearly with the size
         # of the audio file
+        # TODO: instead of totalw this needs to sync with audio length relative to video length
         time = np.linspace(
             0,  # start
             self.__totalW,

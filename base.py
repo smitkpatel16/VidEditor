@@ -52,7 +52,6 @@ class VideoEditorMainWindow(QMainWindow):
         self.setWindowTitle("Video Editor")
         self.__mediaControls = MediaControls()
         self.__avPlayer = MediaPlayer()
-        self.__imageExtract = ExtractImages()
         self.__reelDisplay = MetaDisplay()
         self.__timeline = BuildTimeline()
         self.__threads = []
@@ -107,6 +106,9 @@ class VideoEditorMainWindow(QMainWindow):
         fileName = QFileDialog.getOpenFileName(
             self, "Open Video", "", "Video Files (*.mp4 *.avi *.mov *.mkv)")
         if fileName[0]:
+            self.__imageExtract = ExtractImages()
+            self.__reelDisplay.clearDisplay()
+            self.__imageExtract.reelImage.connect(self.__reelDisplay.addImage)
             self.__avPlayer.videoPlayer.setSource(
                 QUrl.fromLocalFile(fileName[0]))
             self.__audioPath = extractAudio(filePath=fileName[0])
@@ -168,11 +170,11 @@ class VideoEditorMainWindow(QMainWindow):
         self.__mediaControls.seekVideo.connect(self.__avPlayer.seekVideo)
         self.__mediaControls.seekAudio.connect(self.__avPlayer.seekAudio)
         self.__mediaControls.adjustVolume.connect(self.__avPlayer.adjustVolume)
-        self.__imageExtract.reelImage.connect(self.__reelDisplay.addImage)
 
         self.__avPlayer.audioPlayer.positionChanged.connect(
             self.__mediaControls.setAudioPlayPosition)
-
+        self.__avPlayer.videoPlayer.mediaStatusChanged.connect(
+            self.__mediaControls.setVideoState)
         self.__avPlayer.videoPlayer.mediaStatusChanged.connect(
             self.__setVideoState)
         self.__avPlayer.audioPlayer.mediaStatusChanged.connect(
