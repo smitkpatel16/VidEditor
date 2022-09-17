@@ -134,7 +134,13 @@ class MetaDisplay(QGraphicsView):
             self.__totalW,
             num=len(signal)
         )
+        plotted = None
         polyline = QPolygonF()
         for x, y in zip(time, signal):
-            polyline.append(QPointF(x, 160+y*0.002))
+            if not plotted:
+                plotted = x
+                polyline.append(QPointF(x, 160+y*0.002))
+            else:
+                if x-plotted > 1:
+                    plotted = None
         self.display.addPolygon(polyline)
