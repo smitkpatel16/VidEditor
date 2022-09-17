@@ -53,16 +53,13 @@ class MediaControls(QWidget):
         self.__playVideoBtn.setEnabled(False)
 
         self.__stopBtn.setEnabled(False)
-        self.__videoLabel = QLabel('00:00:00')
-        self.__audioLabel = QLabel('00:00:00')
+        self.__videoLabel = QLabel('00/00')
+        self.__audioLabel = QLabel('00/00')
         self.__volSlider = QDial()
         self.__volSlider.setNotchesVisible(True)
         self.__volSlider.setRange(0, 100)
         self.__volSlider.setValue(50)
-        self.__playVideoSlider = QSlider(Qt.Orientation.Horizontal)
-        self.__playVideoSlider.setTickPosition(QSlider.TickPosition.TicksBelow)
-        self.__playAudioSlider = QSlider(Qt.Orientation.Horizontal)
-        self.__playAudioSlider.setTickPosition(QSlider.TickPosition.TicksBelow)
+
         self.__arrangeWidgets()
         self.__connectSignals()
         self.videoDuration = 0
@@ -71,13 +68,12 @@ class MediaControls(QWidget):
 
     def setVideoDuration(self, duration):
         self.videoDuration = duration
-        self.__playVideoSlider.setRange(0, duration)
         self.__playVideoBtn.setEnabled(True)
         self.__enableAllPlay()
 
     def setAudioDuration(self, duration):
         self.audioDuration = duration
-        self.__playAudioSlider.setRange(0, duration)
+
         self.__playAudioBtn.setEnabled(True)
         self.__enableAllPlay()
 
@@ -86,43 +82,47 @@ class MediaControls(QWidget):
             self.__playBtn.setEnabled(True)
 
     def setVideoPlayPosition(self, position):
-        self.__playVideoSlider.setValue(position)
         s = position/1000
-        h = int(s//3600)
-        m = int(s//60)
-        s = int(s % 60)
-        self.__videoLabel.setText('{}h:{}m:{}s'.format(h, m, s))
+        self.__videoLabel.setText('{}/{}s'.format(s, self.videoDuration/1000))
 
     def setAudioPlayPosition(self, position):
-        self.__playAudioSlider.setValue(position)
         s = position/1000
-        h = int(s//3600)
-        m = int(s//60)
-        s = int(s % 60)
-        self.__audioLabel.setText('{}h:{}m:{}s'.format(h, m, s))
+        self.__audioLabel.setText('{}/{}s'.format(s, self.audioDuration/1000))
 
     def setVideoState(self, state):
         if state == QMediaPlayer.MediaStatus.EndOfMedia:
-            self.__playVideoSlider.setValue(0)
             self.__playVideoBtn.setChecked(False)
             self.__playVideoBtn.setText('Play Video')
-            self.__videoLabel.setText('00:00:00')
+            self.__videoLabel.setText('0s/{}s'.format(self.videoDuration/1000))
         if not self.__playVideoBtn.isChecked() and not self.__playAudioBtn.isChecked():
             self.__playBtn.setChecked(False)
             self.__playBtn.setText('Play')
 
     def setAudioState(self, state):
         if state == QMediaPlayer.MediaStatus.EndOfMedia:
-            self.__playAudioSlider.setValue(0)
             self.__playAudioBtn.setChecked(False)
             self.__playAudioBtn.setText('Play Audio')
-            self.__audioLabel.setText('00:00:00')
+            self.__audioLabel.setText('0s/{}s'.format(self.audioDuration/1000))
         if not self.__playVideoBtn.isChecked() and not self.__playAudioBtn.isChecked():
             self.__playBtn.setChecked(False)
             self.__playBtn.setText('Play')
 
     def stop(self):
-        pass
+        self.__stop()
+
+    def stopVideo(self):
+        self.__stopVideo()
+
+    def stopAudio(self):
+        self.__stopAudio()
+
+    def __stopVideo(self):
+        self.__playVideoBtn.setChecked(False)
+        self.__playVideoBtn.setText('Play Video')
+
+    def __stopAudio(self):
+        self.__playAudioBtn.setChecked(False)
+        self.__playAudioBtn.setText('Play Audio')
 
     def __arrangeWidgets(self):
         self.__layout.addWidget(self.__playBtn)
@@ -130,9 +130,6 @@ class MediaControls(QWidget):
         self.__controls1.addWidget(self.__playVideoBtn)
         self.__controls1.addWidget(self.__playAudioBtn)
         self.__layout.addWidget(self.__stopBtn)
-        self.__layout.addLayout(self.__controls2)
-        self.__controls2.addWidget(self.__playVideoSlider)
-        self.__controls2.addWidget(self.__playAudioSlider)
         self.__layout.addLayout(self.__controls3)
         self.__controls3.addWidget(self.__videoLabel)
         self.__controls3.addWidget(self.__audioLabel)
@@ -143,8 +140,6 @@ class MediaControls(QWidget):
         self.__playAudioBtn.clicked.connect(self.__playAudio)
         self.__stopBtn.clicked.connect(self.__stop)
         self.__volSlider.valueChanged.connect(self.__setVolume)
-        self.__playVideoSlider.sliderMoved.connect(self.__seekVideo)
-        self.__playAudioSlider.sliderMoved.connect(self.__seekAudio)
         self.__playBtn.clicked.connect(self.__play)
 
     def __play(self):
@@ -185,7 +180,8 @@ class MediaControls(QWidget):
         self.__playBtn.setChecked(False)
         self.__playBtn.setText('Play')
         self.__stopBtn.setEnabled(False)
-        self.stopAll.emit()
+        self.__stopVideo()
+        self.__stopAudio()
 
     def __setVolume(self, volume):
         self.adjustVolume.emit(volume)

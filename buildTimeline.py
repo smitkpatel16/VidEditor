@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtWidgets import QHBoxLayout
 from PyQt6.QtWidgets import QSlider
+from PyQt6.QtWidgets import QLabel
 from PyQt6.QtCore import Qt
 
 # ===============================================================================
@@ -20,7 +21,9 @@ class BuildTimeline(QWidget):
     def initUI(self):
         self.__finalSlider = QSlider(Qt.Orientation.Horizontal)
         self.__finalSlider.setTickPosition(QSlider.TickPosition.TicksBothSides)
+        self.__finalLabel = QLabel("0s")
         self.__layout.addWidget(self.__finalSlider)
+        self.__layout.addWidget(self.__finalLabel)
 
     def addSelectionVideo(self, selection):
         dur = 0

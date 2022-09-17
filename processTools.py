@@ -1,3 +1,4 @@
+from email.mime import audio
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtCore import QObject
 from PyQt6.QtCore import Qt
@@ -8,6 +9,9 @@ from PyQt6.QtWidgets import QApplication
 import cv2
 import math
 import win32com.client
+import os.path
+import ffmpeg
+
 sh = win32com.client.gencache.EnsureDispatch('Shell.Application', 0)
 
 # ===============================================================================
@@ -18,7 +22,7 @@ sh = win32com.client.gencache.EnsureDispatch('Shell.Application', 0)
 class ExtractImages(QObject):
     reelImage = pyqtSignal(QImage)
     fPath = None
-    finished = pyqtSignal()
+    finished = pyqtSignal(float)
 
     def run(self):
         """
@@ -40,7 +44,7 @@ class ExtractImages(QObject):
             frameInterval = math.ceil(frameCount / 100)
         success, image = capture.read()
         count = 0
-
+        displayed = 0
         while success:
             if count % frameInterval == 0 or count == 0:
                 height, width, channel = image.shape
@@ -48,9 +52,21 @@ class ExtractImages(QObject):
                 qImg = QImage(image.data, width, height,
                               bytesPerLine, QImage.Format.Format_BGR888)
                 self.reelImage.emit(qImg.scaled(r * 80, 80))
+                displayed += 1
             success, image = capture.read()
             count += 1
-        self.finished.emit()
+        self.finished.emit(displayed*r*80)
+
+
+def extractAudio(filePath):
+    # XXX: would need to work on streaming or directory permissions here
+    input = ffmpeg.input(filePath)
+    folder, fileName = os.path.split(filePath)
+    name = fileName.split(".")[0]
+    audioPath = folder+"/" + name+"_audio" + ".wav"
+    output = ffmpeg.output(input.audio, audioPath)
+    output.run(overwrite_output=True)
+    return audioPath
 
 
 def checkDuration(filePath):

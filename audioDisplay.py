@@ -100,7 +100,7 @@ class AudioGraph(QWidget):
             self.__vl.set_xdata([p, p])
             self.__canvas.draw()
 
-    def plotAudio(self, audioPath):
+    def plotAudio(self, audioPath, scaleWidth=1):
         self.__vl = self.axes.axvline(0, ls='-', color='g', lw=3, zorder=10)
         # reading the audio file
         raw = wave.open(audioPath)
@@ -124,11 +124,16 @@ class AudioGraph(QWidget):
             len(signal) / f_rate,
             num=len(signal)
         )
+        if scaleWidth > 1:
+            mf = scaleWidth/(time[-1]*100)
+            time = [mf*v for v in time]
+            size = scaleWidth
+        else:
+            size = len(time)/f_rate
         self.__canvas.figure.set_size_inches(
-            (len(time)/f_rate), 1, forward=True)
-        self.__canvas.resize((len(time)/f_rate)*100, 100)
+            size, 1, forward=True)
+        self.__canvas.resize(size, 100)
         # actual plotting
-        self.__totalW = len(signal)/f_rate
+        self.__totalW = size
         self.axes.plot(time, signal)
-        print((len(time)/f_rate))
         self.__canvas.draw()

@@ -4,9 +4,11 @@ from PyQt6.QtMultimedia import QAudioOutput
 from PyQt6.QtMultimedia import QMediaPlayer
 from PyQt6.QtMultimedia import QMediaDevices
 from PyQt6.QtWidgets import QVBoxLayout
+from PyQt6.QtCore import pyqtSignal
 
 
 class VideoPlayer(QMediaPlayer):
+    stopped = pyqtSignal()
 
     def __init__(self, parent=None):
         self.__selection = []
@@ -19,11 +21,12 @@ class VideoPlayer(QMediaPlayer):
             if position >= self.__selection[self.__selectionPlay][1]:
                 self.__selectionPlay += 1
                 if self.__selectionPlay == len(self.__selection):
+                    self.__selectionPlay = 0
                     self.stop()
-                    return
                 self.setPosition(self.__selection[self.__selectionPlay][0])
 
     def clearSelection(self):
+        self.__selectionPlay = 0
         self.__selection.clear()
 
     def addSelection(self, selections):
@@ -35,6 +38,7 @@ class VideoPlayer(QMediaPlayer):
 
 
 class AudioPlayer(QMediaPlayer):
+    stopped = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)

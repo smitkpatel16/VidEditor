@@ -1,3 +1,5 @@
+import wave
+import numpy as np
 from PyQt6.QtWidgets import QGraphicsView
 from PyQt6.QtWidgets import QGraphicsScene
 from PyQt6.QtWidgets import QGraphicsItem
@@ -6,7 +8,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from PyQt6.QtGui import QPen
 from PyQt6.QtGui import QBrush
+from PyQt6.QtGui import QPolygonF
 from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import QPointF
 from processTools import SelectionLine
 
 
@@ -88,7 +92,7 @@ class MetaDisplay(QGraphicsView):
         pmi.setPos(self.__count * pm.width(), 0)
         if not self.__r:
             self.__r = self.display.addLine(
-                0, 0, 0, pm.height(), self.__pen)
+                0, 0, 0, 240, self.__pen)
             self.__r.setZValue(5000)
         self.__count += 1
         self.__totalW += pm.width()
@@ -105,3 +109,32 @@ class MetaDisplay(QGraphicsView):
             if p > visibleSceneRect.x() + visibleSceneRect.width() or p < visibleSceneRect.x():
                 self.centerOn(p, 0)
             self.__r.setPos(p, 0)
+
+    def plotAudio(self, audioPath):
+
+        # reading the audio file
+        raw = wave.open(audioPath)
+
+        # reads all the frames
+        # -1 indicates all or max frames
+        signal = raw.readframes(-1)
+        signal = np.frombuffer(signal, dtype="int16")
+
+        # gets the frame rate
+        # f_rate = raw.getframerate()
+
+        # to Plot the x-axis in seconds
+        # you need get the frame rate
+        # and divide by size of your signal
+        # to create a Time Vector
+        # spaced linearly with the size
+        # of the audio file
+        time = np.linspace(
+            0,  # start
+            self.__totalW,
+            num=len(signal)
+        )
+        polyline = QPolygonF()
+        for x, y in zip(time, signal):
+            polyline.append(QPointF(x, 160+y*0.002))
+        self.display.addPolygon(polyline)

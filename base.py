@@ -1,11 +1,3 @@
-from buildTimeline import BuildTimeline
-from mediaControl import MediaControls
-from metaDisplay import MetaDisplay
-from mediaPlayer import MediaPlayer
-from processTools import ExtractImages
-from processTools import checkDuration
-from processTools import checkDurationAudio
-from audioDisplay import AudioGraph
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QUrl
 from PyQt6.QtCore import QThread
@@ -15,6 +7,16 @@ from PyQt6.QtWidgets import QFileDialog
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtWidgets import QMainWindow
+from buildTimeline import BuildTimeline
+from mediaControl import MediaControls
+from metaDisplay import MetaDisplay
+from mediaPlayer import MediaPlayer
+from processTools import ExtractImages
+from processTools import checkDuration
+from processTools import checkDurationAudio
+from processTools import extractAudio
+from audioDisplay import AudioGraph
+
 
 # import QMainWindow and QApplication
 
@@ -55,6 +57,7 @@ class VideoEditorMainWindow(QMainWindow):
         self.__reelDisplay = MetaDisplay()
         self.__timeline = BuildTimeline()
         self.__threads = []
+        self.__audioPath = None
         policy = QSizePolicy(QSizePolicy.Policy.Expanding,
                              QSizePolicy.Policy.Expanding)
         self.__avPlayer.setSizePolicy(policy)
@@ -70,11 +73,11 @@ class VideoEditorMainWindow(QMainWindow):
         self.setGeometry(300, 300, 800, 600)
         self.setCentralWidget(CentralWidget())
         self.centralWidget().addWidget(self.__avPlayer)
-        self.__reelDisplay.setMaximumHeight(100)
+        self.__reelDisplay.setMaximumHeight(400)
         self.centralWidget().addWidget(self.__reelDisplay)
+        # self.__showAudio.setMaximumHeight(150)
+        # self.centralWidget().addWidget(self.__showAudio)
         self.centralWidget().addWidget(self.__mediaControls)
-        self.__showAudio.setMaximumHeight(100)
-        self.centralWidget().addWidget(self.__showAudio)
         self.centralWidget().addWidget(self.__timeline)
 
     def __createMenu(self):
@@ -109,6 +112,7 @@ class VideoEditorMainWindow(QMainWindow):
         if fileName[0]:
             self.__avPlayer.videoPlayer.setSource(
                 QUrl.fromLocalFile(fileName[0]))
+            self.__audioPath = extractAudio(filePath=fileName[0])
             duration = checkDuration(fileName[0])
             s = duration
             # s = int(duration.split(':')[0])*3600 + \
@@ -122,26 +126,29 @@ class VideoEditorMainWindow(QMainWindow):
             self.__imageExtract.finished.connect(t.quit)
             self.__imageExtract.finished.connect(
                 self.__imageExtract.deleteLater)
+            self.__imageExtract.finished.connect(self.__displayAudioWave)
             self.__reelDisplay.setDuration(s*1000)
             t.finished.connect(t.deleteLater)
             t.started.connect(self.__imageExtract.run)
             t.start()
         # self.centralWidget().__video_player.play()
 
+    def __displayAudioWave(self, scaleWidth):
+        self.__reelDisplay.plotAudio(self.__audioPath)
+        # print(scaleWidth)
+        # self.__avPlayer.audioPlayer.setSource(
+        #     QUrl.fromLocalFile(self.__audioPath))
+        # duration = checkDurationAudio(self.__audioPath)
+        # s = duration
+        # self.__mediaControls.setAudioDuration(s*1000)
+        # self.__showAudio.setDuration(s*1000)
+        # self.__showAudio.plotAudio(self.__audioPath, scaleWidth)
+
     def __openAudioFile(self):
         fileName = QFileDialog.getOpenFileName(
             self, "Open Audio", "", "Audio Files (*.mp3 *.wav *.flac)")
         if fileName[0]:
-            self.__avPlayer.audioPlayer.setSource(
-                QUrl.fromLocalFile(fileName[0]))
-            duration = checkDurationAudio(fileName[0])
-            # s = int(duration.split(':')[0])*3600 + \
-            #     int(duration.split(':')[1])*60 + \
-            #     int(duration.split(':')[2])
-            s = duration
-            self.__mediaControls.setAudioDuration(s*1000)
-            self.__showAudio.plotAudio(fileName[0])
-            self.__showAudio.setDuration(s*1000)
+            self.__displayAudioWave(fileName[0])
 
     def __connectSignals(self):
         self.__mediaControls.playVideo.connect(
@@ -161,6 +168,8 @@ class VideoEditorMainWindow(QMainWindow):
             self.__avPlayer.videoPlayer.pause)
         self.__mediaControls.pauseAll.connect(
             self.__avPlayer.audioPlayer.pause)
+        self.__avPlayer.videoPlayer.stopped.connect(
+            self.__mediaControls.stopVideo)
 
         self.__mediaControls.seekVideo.connect(self.__avPlayer.seekVideo)
         self.__mediaControls.seekAudio.connect(self.__avPlayer.seekAudio)
