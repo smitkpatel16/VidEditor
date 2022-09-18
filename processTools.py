@@ -22,7 +22,7 @@ sh = win32com.client.gencache.EnsureDispatch('Shell.Application', 0)
 class ExtractImages(QObject):
     reelImage = pyqtSignal(QImage)
     fPath = None
-    finished = pyqtSignal(float)
+    finished = pyqtSignal()
 
     def run(self):
         """
@@ -55,7 +55,7 @@ class ExtractImages(QObject):
                 displayed += 1
             success, image = capture.read()
             count += 1
-        self.finished.emit(displayed*r*80)
+        self.finished.emit()
 
 
 def extractAudio(filePath):

@@ -1,3 +1,4 @@
+import qdarktheme
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QUrl
 from PyQt6.QtCore import QThread
@@ -132,19 +133,20 @@ class VideoEditorMainWindow(QMainWindow):
             t.start()
         # self.centralWidget().__video_player.play()
 
-    def __displayAudioWave(self, scaledWidth):
-        self.__reelDisplay.plotAudio(self.__audioPath)
+    def __displayAudioWave(self):
+        duration = checkDurationAudio(self.__audioPath)
+        self.__reelDisplay.plotAudio(self.__audioPath, duration*1000)
         self.__avPlayer.audioPlayer.setSource(
             QUrl.fromLocalFile(self.__audioPath))
-        duration = checkDurationAudio(self.__audioPath)
-        s = duration
-        self.__mediaControls.setAudioDuration(s*1000)
+        self.__mediaControls.setAudioDuration(duration*1000)
 
     def __openAudioFile(self):
         fileName = QFileDialog.getOpenFileName(
-            self, "Open Audio", "", "Audio Files (*.mp3 *.wav *.flac)")
+            self, "Open Audio", "", "Audio Files (*.wav)")
         if fileName[0]:
-            self.__displayAudioWave(fileName[0])
+            # this is intentionally done to sync up with video opening
+            self.__audioPath = fileName[0]
+            self.__displayAudioWave()
 
     def __connectSignals(self):
         self.__mediaControls.playVideo.connect(
@@ -209,4 +211,5 @@ if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
     window = VideoEditorMainWindow()
+    app.setStyleSheet(qdarktheme.load_stylesheet())
     sys.exit(app.exec())

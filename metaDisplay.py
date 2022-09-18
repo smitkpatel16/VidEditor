@@ -3,6 +3,7 @@ import numpy as np
 from PyQt6.QtWidgets import QGraphicsView
 from PyQt6.QtWidgets import QGraphicsScene
 from PyQt6.QtWidgets import QGraphicsItem
+from PyQt6.QtWidgets import QDialog
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
@@ -12,6 +13,7 @@ from PyQt6.QtGui import QPolygonF
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtCore import QPointF
 from processTools import SelectionLine
+from audioSelect import SelectAudio
 
 
 # create a qgraphicsview widget to display reel of images array
@@ -31,6 +33,9 @@ class MetaDisplay(QGraphicsView):
         self.display = QGraphicsScene()
         self.setScene(self.display)
         self.__pen = QPen(Qt.GlobalColor.green, 3)
+        self.__audioPens = [QPen(Qt.GlobalColor.blue, 2), QPen(
+            Qt.GlobalColor.red, 2), QPen(Qt.GlobalColor.yellow, 2)]
+        self.__selectAudio = SelectAudio(self)
         self.clearDisplay()
 
     # add selection range
@@ -43,6 +48,7 @@ class MetaDisplay(QGraphicsView):
         self.__sl = []
         self.__selection = []
         self.__duration = 0
+        self.__audioWave = []
         self.display.clear()
 
     def addSelection(self):
@@ -96,10 +102,6 @@ class MetaDisplay(QGraphicsView):
         pm = QPixmap.fromImage(qImg)
         pmi = self.display.addPixmap(pm)
         pmi.setPos(self.__count * pm.width(), 0)
-        if not self.__r:
-            self.__r = self.display.addLine(
-                0, 0, 0, 240, self.__pen)
-            self.__r.setZValue(5000)
         self.__count += 1
         self.__totalW += pm.width()
 
@@ -116,8 +118,16 @@ class MetaDisplay(QGraphicsView):
             self.centerOn(p, 0)
             self.__r.setPos(p, 0)
 
-    def plotAudio(self, audioPath):
-
+    def plotAudio(self, audioPath, duration):
+        if self.__audioWave:
+            self.__selectAudio.updatePaths([p[0] for p in self.__audioWave])
+            c = self.__selectAudio.exec()
+            if c == QDialog.DialogCode.Accepted:
+                op = self.__selectAudio.overridePath
+            else:
+                return
+        else:
+            op = None
         # reading the audio file
         raw = wave.open(audioPath)
 
@@ -135,19 +145,41 @@ class MetaDisplay(QGraphicsView):
         # to create a Time Vector
         # spaced linearly with the size
         # of the audio file
-        # TODO: instead of totalw this needs to sync with audio length relative to video length
         time = np.linspace(
             0,  # start
-            self.__totalW,
+            (duration/self.__duration)*self.__totalW,
             num=len(signal)
         )
         plotted = None
         polyline = QPolygonF()
+        if not op:
+            align = len(self.__audioWave) + 1
+        else:
+            for i, v in enumerate(self.__audioWave):
+                if v[0] == op:
+                    align = i + 1
+                    self.display.removeItem(v[1])
         for x, y in zip(time, signal):
             if not plotted:
                 plotted = x
-                polyline.append(QPointF(x, 160+y*0.002))
+                polyline.append(QPointF(x, 160*align+y*0.002))
             else:
                 if x-plotted > 1:
                     plotted = None
-        self.display.addPolygon(polyline)
+        p = len(self.__audioWave) % 3
+        poly = self.display.addPolygon(
+            polyline, self.__audioPens[p])
+        self.__audioWave.append((audioPath, poly))
+
+        if op:
+            for v in self.__audioWave:
+                if v[0] == op:
+                    self.__audioWave.remove(v)
+                    break
+
+        # readjust the active line length
+        if self.__r:
+            self.display.removeItem(self.__r)
+        self.__r = self.display.addLine(
+            0, 0, 0, 80+160*len(self.__audioWave), self.__pen)
+        self.__r.setZValue(5000)
